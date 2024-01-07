@@ -18,6 +18,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 //import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.lib.CTREConfigs;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -28,6 +29,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
+  public static CTREConfigs ctreConfigs;
+
   private RobotContainer m_robotContainer;
 
   /**
@@ -36,23 +39,54 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotInit() {
-    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    // autonomous chooser on the dashboard.
-    Logger.recordMetadata("ProjectName", "MyProject"); // Set a metadata value
 
-    if (isReal()) {
-        Logger.addDataReceiver(new WPILOGWriter("/U")); // Log to a USB stick
-        Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
-        //new PowerDistribution(1, ModuleType.kCTRE);// Enables power distribution logging
-        } //else {
+    ctreConfigs = new CTREConfigs();
 
-    setUseTiming(false); // Run as fast as possible
-    String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
-    Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-    Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+    // Record metadata
+    Logger.getInstance().recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
+    Logger.getInstance().recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
+    Logger.getInstance().recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+    Logger.getInstance().recordMetadata("GitDate", BuildConstants.GIT_DATE);
+    Logger.getInstance().recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
+    switch (BuildConstants.DIRTY) {
+      case 0:
+        Logger.getInstance().recordMetadata("GitDirty", "All changes committed");
+        break;
+      case 1:
+        Logger.getInstance().recordMetadata("GitDirty", "Uncomitted changes");
+        break;
+      default:
+        Logger.getInstance().recordMetadata("GitDirty", "Unknown");
+        break;
+    }
 
-// Logger.disableDeterministicTimestamps() // See "Deterministic Timestamps" in the "Understanding Data Flow" page
-Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
+    // Set up data receivers & replay source
+    switch (Constants.currentMode) {
+      case REAL:
+        // Running on a real robot, log to a USB stick
+        Logger.getInstance().addDataReceiver(new WPILOGWriter("/U"));
+        Logger.getInstance().addDataReceiver(new NT4Publisher());
+        break;
+
+      case SIM:
+        // Running a physics simulator, log to NT
+        Logger.getInstance().addDataReceiver(new NT4Publisher());
+        break;
+
+      case REPLAY:
+        // Replaying a log, set up replay source
+        setUseTiming(false); // Run as fast as possible
+        String logPath = LogFileUtil.findReplayLog();
+        Logger.getInstance().setReplaySource(new WPILOGReader(logPath));
+        Logger.getInstance().addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+        break;
+    }
+
+    // See http://bit.ly/3YIzFZ6 for more information on timestamps in AdvantageKit.
+    // Logger.disableDeterministicTimestamps()
+
+    // Start AdvantageKit logger
+Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
     m_robotContainer = new RobotContainer();
   }
 

@@ -16,10 +16,11 @@ package frc.robot;
 import java.util.Map;
 
 import com.kauailabs.navx.frc.AHRS;
-import static frc.robot.Constants.*;
+//import static frc.robot.Constants.*;
 
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.Joystick;
+//import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
@@ -33,7 +34,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+//import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.commands.autonomous.SimpleAutonomous;
 import frc.robot.commands.manual.DriveSwerve;
 import frc.robot.subsystems.*;
@@ -63,22 +64,26 @@ public class RobotContainer {
   
 
   /// SUBSYSTEMS ///
-  private final SwerveDrivetrain swerveDrivetrain = new SwerveDrivetrain();
-
+  public static final SwerveDrivetrain drivetrain = new SwerveDrivetrain();
 
   /// OI DEVICES / HARDWARE ///
   private final XboxController xbox = new XboxController(0);
-  private final Joystick stick = new Joystick(0);
+  private final PS4Controller ps4 = new PS4Controller(1);
+  //private final Joystick stick = new Joystick(0);
   private static final AHRS ahrs = new AHRS(Port.kMXP);
 
 
   /// COMMANDS ///
   // Autonomous
-  private final SimpleAutonomous simpleAuto = new SimpleAutonomous(swerveDrivetrain, ahrs);
+  private final SimpleAutonomous simpleAuto = new SimpleAutonomous(drivetrain, ahrs);
 
   // Xbox controls
-  private final DriveSwerve drivetrainXbox = new DriveSwerve(swerveDrivetrain, () -> xbox.getLeftY(),
-  ()-> xbox.getLeftX(), ()-> xbox.getRightX(), () -> xbox.getRightBumperPressed());
+  private final DriveSwerve drivetrainXbox = new DriveSwerve(drivetrain, () -> -xbox.getLeftY(), ()-> xbox.getLeftX(), 
+  ()-> -xbox.getRightX(), () -> xbox.getRightBumper(), ()-> xbox.getLeftBumper());
+
+  // Playstation Controls
+  private final DriveSwerve drivePlaystation = new DriveSwerve(drivetrain, () -> -ps4.getLeftY(), () -> ps4.getLeftX(),
+   () -> -ps4.getRightX(), () -> ps4.getR1Button(), () -> ps4.getL1Button());
 
   // Joystick controls
   //private final DriveMecanum drivetrainJoystick = new DriveMecanum(swerveDrivetrain, () -> stick.getX(), () -> stick.getY(), () -> stick.getTwist(), ()-> ahrs.getRotation2d());
@@ -88,7 +93,7 @@ public class RobotContainer {
 
 
   /// JOYSTICK BUTTONS ///
-  JoystickButton intakeGrab = new JoystickButton(stick, INTAKE_GRAB_BUTTON);
+  //JoystickButton intakeGrab = new JoystickButton(stick, INTAKE_GRAB_BUTTON);
   
   /// SHUFFLEBOARD METHODS ///
   /**
@@ -102,6 +107,9 @@ public class RobotContainer {
     m_chooser.setDefaultOption("Basic Autonomous Sequence", simpleAuto);
     //m_chooser.addOption("Automatic autonomous", pidAuto);
 
+    ShuffleboardLayout encoders = m_tab.getLayout("Encoders", BuiltInLayouts.kGrid);
+    encoders.add("Encoder Reset", new InstantCommand(()-> drivetrain.resetToAbsolute()));
+
     ShuffleboardLayout drivingStyleLayout = m_tab.getLayout("driving styles", BuiltInLayouts.kList)
     .withPosition(0, 0).withSize(2, 2)
     .withProperties(Map.of("label position", "BOTTOM"));
@@ -109,7 +117,11 @@ public class RobotContainer {
     //drivingStyleLayout.add("Joystick Field Drive",
     //new InstantCommand(() -> mecanumDrivetrain.setDefaultCommand(drivetrainJoystick), mecanumDrivetrain));
     drivingStyleLayout.add("Swerve Drive",
-    new InstantCommand(() -> swerveDrivetrain.setDefaultCommand(drivetrainXbox), swerveDrivetrain));
+    new InstantCommand(() -> drivetrain.setDefaultCommand(drivetrainXbox), drivetrain));
+
+    drivingStyleLayout.add("PS4 Drive",
+    new InstantCommand(() -> drivetrain.setDefaultCommand(drivePlaystation), drivetrain));
+
  
     ShuffleboardLayout gyroSensor = m_tab.getLayout("NavX", BuiltInLayouts.kGrid)
     .withPosition(2, 0).withSize(1, 3)
@@ -149,7 +161,7 @@ public class RobotContainer {
    * Default commands are ran whenever no other commands are using a specific subsystem.
    */
   private void configureInitialDefaultCommands() {
-    swerveDrivetrain.setDefaultCommand(drivetrainXbox);
+    drivetrain.setDefaultCommand(drivePlaystation);
   }
   /**
    * Use this method to define your button->command mappings.  Buttons can be created by
@@ -171,6 +183,6 @@ public class RobotContainer {
   }
 
   public void displayValues() {
-  SmartDashboard.putData(swerveDrivetrain);
+  SmartDashboard.putData(drivetrain);
   }
 }
