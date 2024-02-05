@@ -1,7 +1,31 @@
 {
   "NTProvider": {
     "types": {
-      "/FMSInfo": "FMSInfo"
+      "/FMSInfo": "FMSInfo",
+      "/Shuffleboard/Competition Robot/Auto Chooser": "String Chooser",
+      "/Shuffleboard/Competition Robot/Encoders/Encoder Reset": "Command",
+      "/Shuffleboard/Competition Robot/NavX/Calibrate": "Command",
+      "/Shuffleboard/Competition Robot/NavX/Reset": "Command",
+      "/Shuffleboard/Competition Robot/driving styles/PS4 Drive": "Command",
+      "/Shuffleboard/Competition Robot/driving styles/Swerve Drive": "Command",
+      "/SmartDashboard/Field": "Field2d",
+      "/SmartDashboard/SendableChooser[1]": "String Chooser"
+    }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "AdvantageKit": {
+        "RealMetadata": {
+          "open": true
+        },
+        "RealOutputs": {
+          "Drivetrain": {
+            "open": true
+          },
+          "open": true
+        },
+        "open": true
+      }
     }
   }
 }

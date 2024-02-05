@@ -17,6 +17,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 
@@ -26,6 +27,7 @@ public class SwerveDrivetrain extends SubsystemBase {
   private AHRS gyro = new AHRS();
   private Float rates[] = new Float[3];
   private SwerveDrivePoseEstimator poseEstimator;
+  private Field2d field;
 
   /*
   private static SwerveDrivetrain drivetrain = new SwerveDrivetrain();
@@ -44,6 +46,7 @@ public class SwerveDrivetrain extends SubsystemBase {
       new SwerveModules(3, Constants.Mod3.constants)
   };
 
+
   poseEstimator = new SwerveDrivePoseEstimator(Constants.DRIVE_KIN, getYaw(), getPositions(),
         new Pose2d());
 
@@ -54,6 +57,9 @@ public class SwerveDrivetrain extends SubsystemBase {
       }
       catch(Exception e){}
     }).start();
+
+    field = new Field2d();
+    SmartDashboard.putData(field);
   }
 
   public void swerveDrive(
@@ -75,6 +81,10 @@ public class SwerveDrivetrain extends SubsystemBase {
     swerveModules[1].setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)), false);
     swerveModules[2].setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)), false);
     swerveModules[3].setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)), false);
+  }
+
+  public Field2d getField() {
+    return field;
   }
 
   public void setModuleStates(SwerveModuleState[] moduleStates){
@@ -138,6 +148,8 @@ public class SwerveDrivetrain extends SubsystemBase {
     rates[0] = gyro.getRawGyroX();
     rates[1] = gyro.getRawGyroY();
     rates[2] = gyro.getRawGyroZ();
+
+    field.setRobotPose(getPose());
   
     SmartDashboard.putNumber("Robot Angle", rawYawValue);
     SmartDashboard.putString("Pose", getPose().toString());

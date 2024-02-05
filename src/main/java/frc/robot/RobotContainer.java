@@ -13,30 +13,42 @@
 
 package frc.robot;
 
+//import static frc.robot.Constants.*;
+//import edu.wpi.first.wpilibj.Joystick;
+//import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+
+
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.kauailabs.navx.frc.AHRS;
-//import static frc.robot.Constants.*;
+
+import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.PIDConstants;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
 
 import edu.wpi.first.wpilibj.GenericHID;
-//import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SerialPort.Port;
+
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-//import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+
 import frc.robot.commands.autonomous.SimpleAutonomous;
 import frc.robot.commands.manual.DriveSwerve;
+
 import frc.robot.subsystems.*;
 
 /**
@@ -55,6 +67,7 @@ public class RobotContainer {
     configureInitialDefaultCommands();
     configureButtonBindings();
     configureShuffleboardData();
+    configureSmartDashboard();
   }
 
   // The robot's subsystems and commands are defined here...
@@ -62,6 +75,23 @@ public class RobotContainer {
   private final ShuffleboardTab m_tab = Shuffleboard.getTab("Competition Robot");
   private final SendableChooser<Command> m_chooser = new SendableChooser<Command>();
   
+  
+  private final SendableChooser<Optional<PathPlannerTrajectory>> autoChooser = new SendableChooser<>();
+  private final SwerveAutoBuilder autoBuilder = new SwerveAutoBuilder(
+    drivetrain::getPose,
+    drivetrain::resetOdometry,
+      Constants.DRIVE_KIN, // SwerveDriveKinematics
+      new PIDConstants(1, 0, 0),
+      new PIDConstants(.8, 0, 0),
+            drivetrain::setModuleStates,
+      eventMap,
+      true,
+      drivetrain);
+
+  private static Map<String, Command> eventMap = new HashMap<>();
+
+
+  PathPlannerTrajectory DoNothing = PathPlanner.loadPath("DoNothing",0,0);
 
   /// SUBSYSTEMS ///
   public static final SwerveDrivetrain drivetrain = new SwerveDrivetrain();
@@ -79,21 +109,14 @@ public class RobotContainer {
 
   // Xbox controls
   private final DriveSwerve drivetrainXbox = new DriveSwerve(drivetrain, () -> -xbox.getLeftY(), ()-> xbox.getLeftX(), 
-  ()-> -xbox.getRightX(), () -> xbox.getRightBumper(), ()-> xbox.getLeftBumper());
+  ()-> -xbox.getRightX(), () -> xbox.getRightBumper(), ()-> xbox.getLeftBumper(), ()-> xbox.getAButton());
 
   // Playstation Controls
   private final DriveSwerve drivePlaystation = new DriveSwerve(drivetrain, () -> -ps4.getLeftY(), () -> ps4.getLeftX(),
-   () -> -ps4.getRightX(), () -> ps4.getR1Button(), () -> ps4.getL1Button());
+   () -> -ps4.getRightX(), () -> ps4.getR1Button(), () -> ps4.getL1Button(), () -> ps4.getCrossButton());
 
-  // Joystick controls
-  //private final DriveMecanum drivetrainJoystick = new DriveMecanum(swerveDrivetrain, () -> stick.getX(), () -> stick.getY(), () -> stick.getTwist(), ()-> ahrs.getRotation2d());
-  //private final TopArmManual topArmManualJoystick = new TopArmManual(topArm, () -> stick.getTrigger(), () -> stick.getRawButton(2), () -> xbox.getLeftTriggerAxis(), ()-> xbox.getRightTriggerAxis());
-  //private final BottomArmManual bottomArmManualJoystick = new BottomArmManual(bottomArm, () -> stick.getPOV());
-  //private final RobotLift liftJoystick = new RobotLift(scissorLift, ()-> xbox.getAButton(), ()-> xbox.getBButton());
-
-
+  
   /// JOYSTICK BUTTONS ///
-  //JoystickButton intakeGrab = new JoystickButton(stick, INTAKE_GRAB_BUTTON);
   
   /// SHUFFLEBOARD METHODS ///
   /**
@@ -114,8 +137,6 @@ public class RobotContainer {
     .withPosition(0, 0).withSize(2, 2)
     .withProperties(Map.of("label position", "BOTTOM"));
 
-    //drivingStyleLayout.add("Joystick Field Drive",
-    //new InstantCommand(() -> mecanumDrivetrain.setDefaultCommand(drivetrainJoystick), mecanumDrivetrain));
     drivingStyleLayout.add("Swerve Drive",
     new InstantCommand(() -> drivetrain.setDefaultCommand(drivetrainXbox), drivetrain));
 
@@ -156,6 +177,12 @@ public class RobotContainer {
     .withWidget(BuiltInWidgets.kSplitButtonChooser);   
   }
 
+  private void configureSmartDashboard(){
+    autoChooser.addOption("test", Optional.empty());
+
+    SmartDashboard.putData(autoChooser);
+  }
+
   /**   
    * Use this method to define the default commands of subsystems. 
    * Default commands are ran whenever no other commands are using a specific subsystem.
@@ -170,7 +197,6 @@ public class RobotContainer {
    * {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-
   }
   
   /**
@@ -179,7 +205,17 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return m_chooser.getSelected();
+
+    // Executes the autonomous command chosen in smart dashboard
+    Optional<PathPlannerTrajectory> choice = autoChooser.getSelected();
+    if (choice.isEmpty()) {
+        return null;
+    }
+    return new ParallelCommandGroup(
+            new InstantCommand(
+                    () -> drivetrain.getField().getObject("Field").setTrajectory(
+                        choice.get())),
+            autoBuilder.fullAuto(choice.get()));
   }
 
   public void displayValues() {

@@ -24,8 +24,9 @@ public class DriveSwerve extends CommandBase {
 
   private SwerveDrivetrain drivetrain;
   private Supplier<Double>  y, x, z;
-  private Supplier<Boolean> fieldTOrientated, toggleX;
+  private Supplier<Boolean> fieldTOrientated, togglespeed, resetGyro;
   boolean fieldDrive = true, onOff = false;
+  double speed = 3.5;
 
   private SlewRateLimiter translationLimiter = new SlewRateLimiter(2.0);
   private SlewRateLimiter strafeLimiter = new SlewRateLimiter(2.0);
@@ -33,13 +34,14 @@ public class DriveSwerve extends CommandBase {
 
 
   public DriveSwerve(SwerveDrivetrain drivetrain, Supplier<Double> yDirect, Supplier<Double> xDirect, 
-  Supplier<Double> rotation, Supplier<Boolean> fieldTOrientated, Supplier<Boolean> toggleX) {
+  Supplier<Double> rotation, Supplier<Boolean> fieldTOrientated, Supplier<Boolean> togglespeed, Supplier<Boolean> resetGyro) {
     addRequirements(drivetrain);
     this.drivetrain = drivetrain;
-    this.toggleX = toggleX;
+    this.togglespeed = togglespeed;
     this.y = yDirect;
     this.x = xDirect;
     this.z = rotation;
+    this.resetGyro = resetGyro;
     this.fieldTOrientated = fieldTOrientated; // toggle
   }
 
@@ -52,11 +54,15 @@ public class DriveSwerve extends CommandBase {
   @Override
   public void execute() {
 
-    if(toggleX.get()){
+    if(togglespeed.get()){
       onOff = !onOff;
     }
     if(onOff){
-      drivetrain.formX();
+      speed = 4.0;
+    }
+
+    if(resetGyro.get()){
+      drivetrain.zeroHeading();
     }
 
     /* Get Values, Deadband */
@@ -71,7 +77,7 @@ public class DriveSwerve extends CommandBase {
       fieldDrive = !fieldDrive;
     }
 
-    drivetrain.swerveDrive( new Translation2d(translationVal * 2.5, strafeVal * 2.5),
+    drivetrain.swerveDrive( new Translation2d(translationVal * speed, strafeVal * speed),
       rotationVal * 4, fieldDrive, false);
   }
 
