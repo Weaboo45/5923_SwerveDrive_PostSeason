@@ -50,9 +50,9 @@ public class DriveJoystickSwerve extends CommandBase {
       drivetrain.zeroHeading();
     }
 
-    double mult = multiplier.get() * 4;
-    if(mult <= 0){
-        mult = 1.0;
+    double mult = multiplier.get() * 2 + 3; //trying to make -1 to 1 turn to 1 to 4
+    if(mult > 4){
+      mult = 4;
     }
     
 
@@ -75,7 +75,6 @@ public class DriveJoystickSwerve extends CommandBase {
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {;
-    //drivetrain.stopModules();
   }
 
   // Returns true when the command should end.

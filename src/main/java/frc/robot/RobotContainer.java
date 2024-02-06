@@ -14,7 +14,7 @@
 package frc.robot;
 
 //import static frc.robot.Constants.*;
-//import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Joystick;
 //import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
 
@@ -47,6 +47,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 
 import frc.robot.commands.autonomous.SimpleAutonomous;
+import frc.robot.commands.manual.DriveJoystickSwerve;
 import frc.robot.commands.manual.DriveSwerve;
 
 import frc.robot.subsystems.*;
@@ -99,7 +100,7 @@ public class RobotContainer {
   /// OI DEVICES / HARDWARE ///
   private final XboxController xbox = new XboxController(0);
   private final PS4Controller ps4 = new PS4Controller(1);
-  //private final Joystick stick = new Joystick(0);
+  private final Joystick stick = new Joystick(2);
   private static final AHRS ahrs = new AHRS(Port.kMXP);
 
 
@@ -108,15 +109,16 @@ public class RobotContainer {
   private final SimpleAutonomous simpleAuto = new SimpleAutonomous(drivetrain, ahrs);
 
   // Xbox controls
-  private final DriveSwerve drivetrainXbox = new DriveSwerve(drivetrain, () -> -xbox.getLeftY(), ()-> xbox.getLeftX(), 
-  ()-> -xbox.getRightX(), () -> xbox.getRightBumper(), ()-> xbox.getLeftBumper(), ()-> xbox.getAButton());
+  private final DriveSwerve drivetrainXbox = new DriveSwerve(drivetrain, () -> -xbox.getLeftY(), ()-> xbox.getLeftX(), ()-> -xbox.getRightX(),
+   () -> xbox.getRightBumper(), ()-> xbox.getLeftBumper(), ()-> xbox.getAButton()); //RB toggles field orintation || LB toggles speed || A button resets heading
 
   // Playstation Controls
-  private final DriveSwerve drivePlaystation = new DriveSwerve(drivetrain, () -> -ps4.getLeftY(), () -> ps4.getLeftX(),
-   () -> -ps4.getRightX(), () -> ps4.getR1Button(), () -> ps4.getL1Button(), () -> ps4.getCrossButton());
+  private final DriveSwerve drivePlaystation = new DriveSwerve(drivetrain, () -> -ps4.getLeftY(), () -> ps4.getLeftX(),() -> -ps4.getRightX(),
+   () -> ps4.getR1Button(), () -> ps4.getL1Button(), () -> ps4.getCrossButton()); //R1 toggles field orintation || L1 toggles speed || X button resets heading
 
-  
-  /// JOYSTICK BUTTONS ///
+  // Joystick Controls
+  private final DriveJoystickSwerve driveJoystick = new DriveJoystickSwerve(drivetrain, () -> stick.getY(), () -> stick.getX(), () -> stick.getTwist(),
+   () -> stick.getTrigger(), () -> stick.getRawButton(2), () -> stick.getThrottle());
   
   /// SHUFFLEBOARD METHODS ///
   /**
@@ -137,11 +139,14 @@ public class RobotContainer {
     .withPosition(0, 0).withSize(2, 2)
     .withProperties(Map.of("label position", "BOTTOM"));
 
-    drivingStyleLayout.add("Swerve Drive",
+    drivingStyleLayout.add("Xbox Drive",
     new InstantCommand(() -> drivetrain.setDefaultCommand(drivetrainXbox), drivetrain));
 
     drivingStyleLayout.add("PS4 Drive",
     new InstantCommand(() -> drivetrain.setDefaultCommand(drivePlaystation), drivetrain));
+
+    drivingStyleLayout.add("Joystick Drive",
+    new InstantCommand(() -> drivetrain.setDefaultCommand(driveJoystick), drivetrain));
 
  
     ShuffleboardLayout gyroSensor = m_tab.getLayout("NavX", BuiltInLayouts.kGrid)
@@ -151,7 +156,7 @@ public class RobotContainer {
     gyroSensor.addNumber("Gyro", ()-> ahrs.getYaw()).withWidget(BuiltInWidgets.kGyro);
 
     gyroSensor.add("Reset",
-    new InstantCommand(()-> ahrs.zeroYaw()));
+    new InstantCommand(()-> drivetrain.zeroHeading()));
 
     gyroSensor.add("Calibrate",
     new InstantCommand(()-> ahrs.calibrate()));
