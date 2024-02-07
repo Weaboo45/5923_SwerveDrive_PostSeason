@@ -117,7 +117,7 @@ public class RobotContainer {
    () -> ps4.getR1Button(), () -> ps4.getL1Button(), () -> ps4.getCrossButton()); //R1 toggles field orintation || L1 toggles speed || X button resets heading
 
   // Joystick Controls
-  private final DriveJoystickSwerve driveJoystick = new DriveJoystickSwerve(drivetrain, () -> stick.getY(), () -> stick.getX(), () -> stick.getTwist(),
+  private final DriveJoystickSwerve driveJoystick = new DriveJoystickSwerve(drivetrain, () -> -stick.getY(), () -> -stick.getX(), () -> stick.getTwist(),
    () -> stick.getTrigger(), () -> stick.getRawButton(2), () -> stick.getThrottle());
   
   /// SHUFFLEBOARD METHODS ///
