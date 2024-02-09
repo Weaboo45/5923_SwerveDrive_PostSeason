@@ -5,12 +5,6 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-// TO DO (12/13/2022):
-// Increase motor power while strafing
-// Gyro zeroing button (B)
-// Command for pivoting to 0/90/180/270 using D-pad
-//bruhs
-
 package frc.robot;
 
 //import static frc.robot.Constants.*;
@@ -100,7 +94,7 @@ public class RobotContainer {
   /// OI DEVICES / HARDWARE ///
   private final XboxController xbox = new XboxController(0);
   private final PS4Controller ps4 = new PS4Controller(1);
-  private final Joystick stick = new Joystick(2);
+  private final Joystick stick = new Joystick(1);
   private static final AHRS ahrs = new AHRS(Port.kMXP);
 
 
@@ -117,8 +111,8 @@ public class RobotContainer {
    () -> ps4.getR1Button(), () -> ps4.getL1Button(), () -> ps4.getCrossButton()); //R1 toggles field orintation || L1 toggles speed || X button resets heading
 
   // Joystick Controls
-  private final DriveJoystickSwerve driveJoystick = new DriveJoystickSwerve(drivetrain, () -> -stick.getY(), () -> -stick.getX(), () -> stick.getTwist(),
-   () -> stick.getTrigger(), () -> stick.getRawButton(2), () -> stick.getThrottle());
+  private final DriveJoystickSwerve driveJoystick = new DriveJoystickSwerve(drivetrain, () -> stick.getY(), () -> stick.getX(), () -> stick.getTwist(),
+   () -> stick.getRawButton(7), () -> stick.getRawButton(8), () -> stick.getThrottle());
   
   /// SHUFFLEBOARD METHODS ///
   /**
@@ -193,7 +187,7 @@ public class RobotContainer {
    * Default commands are ran whenever no other commands are using a specific subsystem.
    */
   private void configureInitialDefaultCommands() {
-    drivetrain.setDefaultCommand(drivePlaystation);
+    drivetrain.setDefaultCommand(driveJoystick);
   }
   /**
    * Use this method to define your button->command mappings.  Buttons can be created by
